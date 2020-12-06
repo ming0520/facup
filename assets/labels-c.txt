@@ -1,0 +1,5 @@
+0 amond
+1 ivory
+2 natural
+3 other
+4 pokemon
