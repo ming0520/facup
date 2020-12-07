@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'tflite_interpreter.dart';
 
 void main() => runApp(MaterialApp(
+      debugShowCheckedModeBanner: false,
       home: MyApp(),
     ));
 
@@ -37,8 +38,12 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     _loading = true;
-    isCalling = true;
-
+    isCalling = false;
+    print("Initialize isCalling: " + isCalling.toString());
+//    _response['sharpness'] = 0.0;
+//    _response['brightness'] = 0.0;
+//    _response['contrast'] = 0.0;
+    _response = {'sharpness': 0.0, 'brightness': 0.0, 'contrast': 0.0};
 //    loadModel().then((value) {
 //      setState(() {
 //        _loading = false;
@@ -118,19 +123,19 @@ class _MyAppState extends State<MyApp> {
                               TableRow(children: [
                                 Text('Brightness'),
                                 Text(isCalling
-                                    ? 'None'
+                                    ? 'Detecting ...'
                                     : '${_response['brightness']}'),
                               ]),
                               TableRow(children: [
                                 Text('Sharpness'),
                                 Text(isCalling
-                                    ? 'None'
+                                    ? 'Detecting ...'
                                     : '${_response['sharpness']}'),
                               ]),
                               TableRow(children: [
                                 Text('Contrast'),
                                 Text(isCalling
-                                    ? 'None'
+                                    ? 'Detecting ...'
                                     : '${_response['contrast']}'),
                               ]),
                             ],
@@ -193,13 +198,14 @@ class _MyAppState extends State<MyApp> {
   }
 
   callApi(File image) async {
+    print('----------------------API Start_______________');
     setState(() {
       _response['sharpness'] = 0.0;
       _response['brightness'] = 0.0;
       _response['contrast'] = 0.0;
       isCalling = true;
+      print("callApi: Set isCalling: " + isCalling.toString());
     });
-    print('Calling API!!');
     var postUri = Uri.parse("https://api.sightengine.com/1.0/check.json");
     var request = new http.MultipartRequest("POST", postUri);
     request.fields['api_user'] = '898643903';
@@ -211,27 +217,27 @@ class _MyAppState extends State<MyApp> {
       image.absolute.path,
       contentType: new MediaType('image', 'jpg'),
     ));
-    print('Requestin ... ');
+    print('callApi: Requesting ... ');
     request
         .send()
         .then((result) async {
           http.Response.fromStream(result).then((response) {
             if (response.statusCode == 200) {
-              print("Uploaded! ");
+              print("callApi: Uploaded! ");
               print('response.body ' + response.body);
 //              return response;
             }
             setState(() {
               isCalling = false;
               _response = json.decode(response.body);
+              print("callApi: Set isCalling: " + isCalling.toString());
             });
-            print('55555555555555555555555555555555');
             print(_response['sharpness']);
             print('----------------------API DONE_______________');
             return response.body;
           });
         })
-        .catchError((err) => print('error : ' + err.toString()))
+        .catchError((err) => print('callApi: error : ' + err.toString()))
         .whenComplete(() {});
   }
 
@@ -268,6 +274,7 @@ class _MyAppState extends State<MyApp> {
 //      imageMean: 127.5,
 //      imageStd: 127.5,
 //    );
+    print('----------------------Classifing______________');
     await tf1.predictImage(image.path);
     var output = tf1.ddmap;
     var confidence = 0.0;
@@ -365,14 +372,13 @@ class _MyAppState extends State<MyApp> {
 //    request.fields['models'] = 'properties';
 //    var res = await request.send();+
 
-    var test = callApi(image).then((value) {
-      setState(() {
-        isCalling = false;
-      });
-    });
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
+    print("Start test");
+    var test = callApi(image);
+//      setState(() {
+//        isCalling = false;
+//        print("classifyImage: Set isCalling: " + isCalling.toString());
+    print("test Done!");
+    print('----------------------Classified______________');
     print("@======================================");
     print(_response.toString());
     print("@======================================");
